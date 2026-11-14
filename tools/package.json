@@ -1,0 +1,9 @@
+{
+  "name": "keycard-sim-tools",
+  "private": true,
+  "type": "module",
+  "description": "circomlibjs cross-checks for keycard-sim (reference vectors, verification of the card's signatures)",
+  "dependencies": {
+    "circomlibjs": "0.1.7"
+  }
+}

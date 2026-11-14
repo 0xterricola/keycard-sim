@@ -1,0 +1,48 @@
+--- KeycardApplet.java
++++ KeycardApplet.java
+@@ -140,6 +140,7 @@
+   private OwnerPIN puk;
+ 
+   private SecureChannelV2 secureChannel;
++  private BjjSigner bjj;
+ 
+   private ECPublicKey masterPublic;
+   private ECPrivateKey masterPrivate;
+@@ -213,6 +214,7 @@
+     data = new byte[(short)(MAX_DATA_LENGTH + 1)];
+ 
+     secureChannel = new SecureChannelV2(crypto, secp256k1);
++    bjj = new BjjSigner(crypto, secp256k1);
+ 
+     register(bArray, (short) (bOffset + 1), bArray[bOffset]);
+   }
+@@ -231,6 +233,7 @@
+ 
+     if (selectingApplet()) {
+       secp256k1.onSelect();
++      bjj.onSelect();
+       secureChannel.onSelect();
+       selectApplet(apdu);
+       return;
+@@ -334,6 +337,13 @@
+       case INS_ECDH:
+         ecdh(apdu);
+         break;
++      case BjjSigner.INS_BJJ_LOAD_KEY:
++      case BjjSigner.INS_BJJ_GET_PUBLIC:
++      case BjjSigner.INS_BJJ_COMMIT:
++      case BjjSigner.INS_BJJ_RESPOND:
++      case BjjSigner.INS_BJJ_CALIBRATE:
++        secureChannel.respond(apdu, bjj.process(apduBuffer, pin.isValidated()), ISO7816.SW_NO_ERROR);
++        break;
+       default:
+         ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+         break;
+@@ -956,6 +966,7 @@
+     masterPublic.clearKey();
+     masterSsk.clearKey();
+     resetCurveParameters();
++    bjj.clear();
+     Util.arrayFillNonAtomic(masterChainCode, (short) 0, (short) masterChainCode.length, (byte) 0);
+     Util.arrayFillNonAtomic(altChainCode, (short) 0, (short) altChainCode.length, (byte) 0);
+     Util.arrayFillNonAtomic(leeMasterChainCode, (short) 0, (short) leeMasterChainCode.length, (byte) 0);
