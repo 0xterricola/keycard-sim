@@ -1,0 +1,5 @@
+keycard-sim
+Copyright 2026 ZKNOX SAS
+
+This product includes software from status-keycard (Apache 2.0) and jCardSim (Apache 2.0, Copyright 2011 Licel LLC).
+Data in costs/source/ comes from JCAlgTest (MIT, CRoCS, Masaryk University), see costs/source/LICENSE.
