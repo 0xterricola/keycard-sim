@@ -45,7 +45,7 @@ echo "[2/8] BouncyCastle 1.65 (core + prov)"
 if [ ! -f "$OUT/bcprov-1.65.jar" ]; then
   rm -rf "$OUT/bc" && mkdir -p "$OUT/bc"
   find "$DEPS/bc-java/core/src/main/java" "$DEPS/bc-java/prov/src/main/java" -name '*.java' > "$OUT/bc-sources.txt"
-  "${JAVAC[@]}" --release 8 -d "$OUT/bc" @"$OUT/bc-sources.txt" 2>&1 | grep -E 'error' || true
+  "${JAVAC[@]}" --release 8 -d "$OUT/bc" @"$OUT/bc-sources.txt"
   cp -r "$DEPS/bc-java/prov/src/main/resources/." "$OUT/bc/"
   (cd "$OUT/bc" && jar cf "$OUT/bcprov-1.65.jar" .)
 fi
@@ -61,13 +61,18 @@ rm -rf "$OUT/applet-src" "$OUT/applet" && mkdir -p "$OUT/applet-src" "$OUT/apple
 cp "$DEPS/status-keycard/src/main/java/im/status/keycard/"*.java "$OUT/applet-src/"
 cp "$ROOT/applet-ext/im/status/keycard/"*.java "$OUT/applet-src/"
 (cd "$OUT/applet-src" && patch -s -p0 < "$ROOT/patches/applet-bjj.patch")
-sed -i 's/KeyBuilder\.TYPE_EC_FP_PRIVATE_TRANSIENT_DESELECT/KeyBuilder.TYPE_EC_FP_PRIVATE/g' "$OUT/applet-src/"*.java
+perl -pi -e 's/KeyBuilder\.TYPE_EC_FP_PRIVATE_TRANSIENT_DESELECT/KeyBuilder.TYPE_EC_FP_PRIVATE/g' "$OUT/applet-src/"*.java
 "${JAVAC[@]}" --release 8 -cp "$JCARDSIM:$KCMATH" -d "$OUT/applet" "$OUT/applet-src/"*.java
 
 echo "[5/8] correctif jCardSim (RSA NOPAD)"
 rm -rf "$OUT/jcardsim-patch" && mkdir -p "$OUT/jcardsim-patch"
-"${JAVAC[@]}" --release 8 -cp "$JCARDSIM" -d "$OUT/jcardsim-patch" \
-  "$ROOT/patches/jcardsim/com/licel/jcardsim/crypto/AsymmetricCipherImpl.java"
+mkdir -p "$OUT/jcardsim-patch-src/com/licel/jcardsim/crypto"
+python3 "$ROOT/tools/prepare_jcardsim_rng.py" \
+  "$DEPS/status-keycard/jcardsim/src/main/java/com/licel/jcardsim/crypto/RandomDataImpl.java" \
+  "$OUT/jcardsim-patch-src/com/licel/jcardsim/crypto/RandomDataImpl.java"
+"${JAVAC[@]}" --release 8 -cp "$JCARDSIM:$OUT/bcprov-1.65.jar" -d "$OUT/jcardsim-patch" \
+  "$ROOT/patches/jcardsim/com/licel/jcardsim/crypto/AsymmetricCipherImpl.java" \
+  "$OUT/jcardsim-patch-src/com/licel/jcardsim/crypto/RandomDataImpl.java"
 
 echo "[6/8] agent de profilage (ASM 9.6)"
 rm -rf "$OUT/agent" && mkdir -p "$OUT/agent"
